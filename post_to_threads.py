@@ -67,12 +67,13 @@ def create_container(text: str) -> str:
     戻り値: container_id
     """
     url = f"{API_BASE}/{USER_ID}/threads"
-    params = {
+    payload = {
         "media_type": "TEXT",
         "text": text,
         "access_token": ACCESS_TOKEN,
     }
-    r = requests.post(url, params=params, timeout=30)
+    # data=で送ることで、改行文字(\n)がフォームボディ内で正しく扱われる
+    r = requests.post(url, data=payload, timeout=30)
     r.raise_for_status()
     data = r.json()
     container_id = data.get("id")
@@ -87,11 +88,11 @@ def publish_container(container_id: str) -> str:
     戻り値: 公開された投稿のID
     """
     url = f"{API_BASE}/{USER_ID}/threads_publish"
-    params = {
+    payload = {
         "creation_id": container_id,
         "access_token": ACCESS_TOKEN,
     }
-    r = requests.post(url, params=params, timeout=30)
+    r = requests.post(url, data=payload, timeout=30)
     r.raise_for_status()
     data = r.json()
     post_id = data.get("id")
