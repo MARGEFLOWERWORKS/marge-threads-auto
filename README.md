@@ -5,7 +5,7 @@ Meta公式のThreads APIを使い、GitHub Actionsで無料運用します。
 
 ## 何が起きるか
 
-- 毎日 **日本時間 20:00** に GitHub Actions が起動
+- 毎日 **日本時間 18:00** に GitHub Actions が起動
 - `threads_posts_50.json` から `posted: false` の投稿を1件取り出す
 - Threads に投稿する
 - 成功したら `posted: true` に書き換えて Git に記録する
