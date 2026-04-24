@@ -39,7 +39,7 @@ MAX_CHARS = 500  # Threadsの1投稿文字数上限
 
 # 画像を添える確率（0.0 = 絶対添えない, 1.0 = 絶対添える）
 # 例：0.5 = 50%の確率で画像付き、50%の確率で文字のみ
-IMAGE_PROBABILITY = 0.5
+IMAGE_PROBABILITY = 1.0
 
 # 画像を添えるときの枚数
 IMAGES_PER_POST = 2
