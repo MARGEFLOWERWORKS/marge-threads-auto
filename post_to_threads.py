@@ -39,7 +39,7 @@ MAX_CHARS = 500  # Threadsの1投稿文字数上限
 
 # 画像を添える確率（0.0 = 絶対添えない, 1.0 = 絶対添える）
 # 例：0.5 = 50%の確率で画像付き、50%の確率で文字のみ
-IMAGE_PROBABILITY = 1.0
+IMAGE_PROBABILITY = 0.5
 
 # 画像を添えるときの枚数
 IMAGES_PER_POST = 2
@@ -107,10 +107,29 @@ def decide_images_for_post() -> list:
     - 画像が足りない場合はテキストのみ
     戻り値: 画像パスのリスト（空ならテキストのみ投稿）
     """
+    # デバッグ情報を詳しく出力
+    print(f"  [DEBUG] スクリプトの場所: {Path(__file__).parent}")
+    print(f"  [DEBUG] 画像フォルダを探す場所: {IMAGES_DIR}")
+    print(f"  [DEBUG] 画像フォルダは存在する？: {IMAGES_DIR.exists()}")
+    if IMAGES_DIR.exists():
+        all_files = list(IMAGES_DIR.iterdir())
+        print(f"  [DEBUG] imagesフォルダ内の全ファイル ({len(all_files)}個):")
+        for f in all_files:
+            print(f"    - {f.name} (拡張子: {f.suffix})")
+
     available = list_available_images()
+    print(f"  [DEBUG] 認識された画像: {len(available)}枚")
+    for img in available:
+        print(f"    認識OK: {img.name}")
+
+    print(f"  [DEBUG] IMAGE_PROBABILITY = {IMAGE_PROBABILITY}")
+    print(f"  [DEBUG] IMAGES_PER_POST = {IMAGES_PER_POST}")
+
     if len(available) < IMAGES_PER_POST:
         if len(available) > 0:
             print(f"  画像が{len(available)}枚しかない（{IMAGES_PER_POST}枚必要）のでテキストのみで投稿します")
+        else:
+            print(f"  画像が0枚のためテキストのみで投稿します")
         return []
 
     # 確率で画像有無を判定
