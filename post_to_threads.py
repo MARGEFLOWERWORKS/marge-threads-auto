@@ -39,7 +39,7 @@ MAX_CHARS = 500  # Threadsの1投稿文字数上限
 
 # 画像を添える確率（0.0 = 絶対添えない, 1.0 = 絶対添える）
 # 例：0.5 = 50%の確率で画像付き、50%の確率で文字のみ
-IMAGE_PROBABILITY = 0.3
+IMAGE_PROBABILITY = 0.5
 
 # 画像を添えるときの枚数
 IMAGES_PER_POST = 2
@@ -181,6 +181,37 @@ def create_image_carousel_item(image_url: str) -> str:
     return item_id
 
 
+def wait_until_finished(container_id: str, max_wait: int = 60) -> None:
+    """
+    コンテナの処理状態がFINISHEDになるまで待機する。
+    Threadsは画像をMetaのCDNに保存する処理が終わるまで時間がかかる。
+    """
+    url = f"{API_BASE}/{container_id}"
+    params = {"fields": "status,error_message", "access_token": ACCESS_TOKEN}
+    waited = 0
+    interval = 3  # 3秒おきにチェック
+
+    while waited < max_wait:
+        r = requests.get(url, params=params, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+        status = data.get("status", "UNKNOWN")
+        print(f"    {container_id} のステータス: {status}（{waited}秒経過）")
+
+        if status == "FINISHED":
+            return
+        if status == "ERROR":
+            err = data.get("error_message", "(エラー詳細不明)")
+            raise RuntimeError(f"画像処理エラー ({container_id}): {err}")
+        if status == "EXPIRED":
+            raise RuntimeError(f"コンテナが期限切れ ({container_id})")
+
+        time.sleep(interval)
+        waited += interval
+
+    raise RuntimeError(f"コンテナ処理がタイムアウト ({container_id}, {max_wait}秒)")
+
+
 def create_carousel_container(text: str, children_ids: list) -> str:
     """カルーセル本体のコンテナ作成（テキスト + 子コンテナIDたち）"""
     url = f"{API_BASE}/{USER_ID}/threads"
@@ -237,6 +268,13 @@ def post_to_threads(text: str, image_paths: list) -> str:
             item_id = create_image_carousel_item(url)
             print(f"    アイテム{i}: {item_id}")
             children_ids.append(item_id)
+
+        # 各アイテムが処理完了（FINISHED）するまで待つ
+        # これをしないと「Invalid Carousel Children」エラーになる
+        print(f"  各画像アイテムの処理完了を待機中...")
+        for i, cid in enumerate(children_ids, 1):
+            print(f"  アイテム{i}の処理状況をチェック:")
+            wait_until_finished(cid, max_wait=60)
 
         print(f"  カルーセルコンテナ作成中...")
         container_id = create_carousel_container(text, children_ids)
